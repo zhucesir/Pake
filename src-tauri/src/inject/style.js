@@ -529,7 +529,7 @@ window.addEventListener("DOMContentLoaded", (_event) => {
   }
 
   // ================= YouTube 去广告 & 推广条纯净 CSS =================
-  if (window.location.host.includes('youtube.com')) {
+  if (window.location.host.includes("youtube.com")) {
     const ytCSS = `
       ytd-promoted-video-renderer,
       ytd-display-ad-renderer,
@@ -543,9 +543,8 @@ window.addEventListener("DOMContentLoaded", (_event) => {
         display: none !important;
       }
     `;
-    const styleElem = document.createElement('style');
+    const styleElem = document.createElement("style");
     styleElem.innerHTML = ytCSS;
     document.head.appendChild(styleElem);
   }
 });
-

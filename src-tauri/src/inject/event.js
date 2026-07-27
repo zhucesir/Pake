@@ -41,20 +41,14 @@ function returnToHomePage() {
 
 function copyCurrentPageUrl() {
   const url = window.location.href;
-  if (
-    navigator.clipboard &&
-    typeof navigator.clipboard.writeText === "function"
-  ) {
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        try {
-          new Notification("Pake", {
-            body: "已复制当前链接 / Copied URL",
-          });
-        } catch (e) {}
-      })
-      .catch(() => {});
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+    navigator.clipboard.writeText(url).then(() => {
+      try {
+        new Notification("Pake", {
+          body: "已复制当前链接 / Copied URL",
+        });
+      } catch (e) {}
+    }).catch(() => {});
   }
 }
 
@@ -736,10 +730,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (
         currentUrl.hostname.includes("youtube.com") &&
-        (linkUrl.hostname.includes("google.com") ||
-          linkUrl.hostname.includes("youtube.com") ||
-          linkUrl.hostname.includes("googleusercontent.com") ||
-          linkUrl.hostname.includes("ggpht.com"))
+        (linkUrl.hostname.includes("google.com") || linkUrl.hostname.includes("youtube.com") || linkUrl.hostname.includes("googleusercontent.com") || linkUrl.hostname.includes("ggpht.com"))
       ) {
         return true;
       }
@@ -777,13 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (anchorElement && anchorElement.href) {
       const rawHref = anchorElement.getAttribute("href") || "";
-      if (
-        rawHref === "" ||
-        rawHref === "#" ||
-        rawHref.startsWith("javascript:") ||
-        rawHref === "about:blank" ||
-        shouldBypassPakeLinkHandling(rawHref)
-      ) {
+      if (rawHref === "" || rawHref === "#" || rawHref.startsWith("javascript:") || rawHref === "about:blank" || shouldBypassPakeLinkHandling(rawHref)) {
         return;
       }
 
@@ -907,12 +892,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Rewrite the window.open function.
   const originalWindowOpen = window.open;
   window.open = function (url, name, specs) {
-    if (
-      !url ||
-      url === "about:blank" ||
-      url === "javascript:;" ||
-      url === "javascript:void(0)"
-    ) {
+    if (!url || url === "about:blank" || url === "javascript:;" || url === "javascript:void(0)") {
       return originalWindowOpen.call(window, url, name, specs);
     }
     const normalizedUrl = normalizeAnchorHref(url);
@@ -1526,83 +1506,26 @@ function getFilenameFromUrl(url) {
   }
 }
 
-// ================= YouTube 去广告 & 去跟踪统计(Anti-Tracking) 模块 =================
+// ================= YouTube 去广告(Anti-Tracking & Ad-Skip) 模块 =================
 (() => {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return;
   }
 
-  // 1. 网络层去跟踪统计 & 广告请求拦截 (Anti-Tracking & Ad-Telemetry Blocker)
-  const blockPatterns = [
-    "doubleclick.net",
-    "google-analytics.com",
-    "googleadservices.com",
-    "/pagead/",
-    "/api/stats/ads",
-    "/pcs/view",
-    "/pagead/lvz",
-  ];
-
-  if (typeof window.fetch === "function") {
-    const origFetch = window.fetch;
-    window.fetch = function (...args) {
-      const url =
-        typeof args[0] === "string"
-          ? args[0]
-          : args[0] && args[0].url
-            ? args[0].url
-            : "";
-      if (
-        (window.location?.host?.includes("youtube.com") ||
-          url.includes("youtube.com")) &&
-        blockPatterns.some((pattern) => url.includes(pattern))
-      ) {
-        return Promise.reject(
-          new Error("Blocked YouTube Ad/Tracking Telemetry by Pake"),
-        );
-      }
-      return origFetch.apply(this, args);
-    };
-  }
-
-  if (
-    typeof XMLHttpRequest !== "undefined" &&
-    XMLHttpRequest.prototype &&
-    XMLHttpRequest.prototype.open
-  ) {
-    const origOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-      if (
-        typeof url === "string" &&
-        (window.location?.host?.includes("youtube.com") ||
-          url.includes("youtube.com")) &&
-        blockPatterns.some((pattern) => url.includes(pattern))
-      ) {
-        this.send = function () {};
-        return;
-      }
-      return origOpen.call(this, method, url, ...rest);
-    };
-  }
-
-  // 2. 0.01秒视频快进秒杀 + 全能模拟点击“跳过广告”
+  // 全能模拟点击“跳过广告”
   function syntheticClick(el) {
     if (!el) return;
+    try { el.click(); } catch (e) {}
     try {
-      el.click();
-    } catch (e) {}
-    try {
-      ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach(
-        (type) => {
-          el.dispatchEvent(
-            new MouseEvent(type, {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-            }),
-          );
-        },
-      );
+      ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach((type) => {
+        el.dispatchEvent(
+          new MouseEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+          })
+        );
+      });
     } catch (e) {}
   }
 
@@ -1622,7 +1545,7 @@ function getFilenameFromUrl(url) {
       ".ytp-ad-player-overlay-skip-or-preview button",
       "button.ytp-ad-skip-button",
       "button[class*='skip']",
-      "[id^='skip-button']",
+      "[id^='skip-button']"
     ];
 
     skipSelectors.forEach((sel) => {
@@ -1630,46 +1553,39 @@ function getFilenameFromUrl(url) {
     });
 
     // Match by button text ("跳过" / "Skip" / "Skip ad")
-    document
-      .querySelectorAll("button, div[role='button'], .ytp-ad-skip-button-slot")
-      .forEach((btn) => {
-        const txt = (btn.innerText || "").trim().toLowerCase();
-        if (
-          txt === "跳过" ||
-          txt === "跳过广告" ||
-          txt.includes("skip ad") ||
-          txt === "skip" ||
-          (btn.className &&
-            typeof btn.className === "string" &&
-            btn.className.toLowerCase().includes("skip"))
-        ) {
-          syntheticClick(btn);
-        }
-      });
+    document.querySelectorAll("button, div[role='button'], .ytp-ad-skip-button-slot").forEach((btn) => {
+      const txt = (btn.innerText || "").trim().toLowerCase();
+      if (
+        txt === "跳过" ||
+        txt === "跳过广告" ||
+        txt.includes("skip ad") ||
+        txt === "skip" ||
+        (btn.className && typeof btn.className === "string" && btn.className.toLowerCase().includes("skip"))
+      ) {
+        syntheticClick(btn);
+      }
+    });
 
     const video = document.querySelector("video");
-    const adShowing = document.querySelector(
-      ".ad-showing, .ytp-ad-player-overlay",
-    );
-    if (video && adShowing && !isNaN(video.duration) && video.duration > 0) {
-      video.currentTime = video.duration;
+    const adShowing = document.querySelector(".ad-showing, .ytp-ad-player-overlay");
+    if (video && adShowing) {
+      video.muted = true;
+      video.playbackRate = 16.0;
+      if (!isNaN(video.duration) && video.duration > 0) {
+        video.currentTime = video.duration;
+      }
       try {
         video.dispatchEvent(new Event("timeupdate"));
         video.dispatchEvent(new Event("ended"));
       } catch (e) {}
     }
 
-    const adWarning = document.querySelector(
-      "tp-yt-paper-dialog, ytd-enforcement-message-view-model",
-    );
-    if (
-      adWarning &&
-      (adWarning.innerText.includes("广告拦截") ||
-        adWarning.innerText.includes("ad blockers") ||
-        adWarning.innerText.includes("Ad blockers"))
-    ) {
+    const adWarning = document.querySelector("tp-yt-paper-dialog, ytd-enforcement-message-view-model");
+    if (adWarning && (adWarning.innerText.includes("广告拦截") || adWarning.innerText.includes("ad blockers") || adWarning.innerText.includes("Ad blockers"))) {
       adWarning.remove();
       if (video && video.paused) video.play();
     }
   }, 250);
 })();
+
+

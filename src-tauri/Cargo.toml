@@ -23,6 +23,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["time"] }
 tauri = { version = "2.10.2", features = [
   "tray-icon",
+    "devtools",
   "image-ico",
   "image-png",
   "macos-proxy",

@@ -527,4 +527,25 @@ window.addEventListener("DOMContentLoaded", (_event) => {
     `;
     document.head.appendChild(topPaddingStyleElement);
   }
+
+  // ================= YouTube 去广告 & 推广条纯净 CSS =================
+  if (window.location.host.includes('youtube.com')) {
+    const ytCSS = `
+      ytd-promoted-video-renderer,
+      ytd-display-ad-renderer,
+      ytd-banner-promo-renderer,
+      ytd-ad-slot-renderer,
+      ytd-in-feed-ad-layout-renderer,
+      ytd-ad-renderer,
+      #masthead-ad,
+      .ytd-ad-slot-renderer,
+      .ytp-ad-module {
+        display: none !important;
+      }
+    `;
+    const styleElem = document.createElement('style');
+    styleElem.innerHTML = ytCSS;
+    document.head.appendChild(styleElem);
+  }
 });
+

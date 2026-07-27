@@ -41,14 +41,20 @@ function returnToHomePage() {
 
 function copyCurrentPageUrl() {
   const url = window.location.href;
-  if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-    navigator.clipboard.writeText(url).then(() => {
-      try {
-        new Notification("Pake", {
-          body: "已复制当前链接 / Copied URL",
-        });
-      } catch (e) {}
-    }).catch(() => {});
+  if (
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === "function"
+  ) {
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        try {
+          new Notification("Pake", {
+            body: "已复制当前链接 / Copied URL",
+          });
+        } catch (e) {}
+      })
+      .catch(() => {});
   }
 }
 
@@ -730,7 +736,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (
         currentUrl.hostname.includes("youtube.com") &&
-        (linkUrl.hostname.includes("google.com") || linkUrl.hostname.includes("youtube.com") || linkUrl.hostname.includes("googleusercontent.com") || linkUrl.hostname.includes("ggpht.com"))
+        (linkUrl.hostname.includes("google.com") ||
+          linkUrl.hostname.includes("youtube.com") ||
+          linkUrl.hostname.includes("googleusercontent.com") ||
+          linkUrl.hostname.includes("ggpht.com"))
       ) {
         return true;
       }
@@ -768,7 +777,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (anchorElement && anchorElement.href) {
       const rawHref = anchorElement.getAttribute("href") || "";
-      if (rawHref === "" || rawHref === "#" || rawHref.startsWith("javascript:") || rawHref === "about:blank" || shouldBypassPakeLinkHandling(rawHref)) {
+      if (
+        rawHref === "" ||
+        rawHref === "#" ||
+        rawHref.startsWith("javascript:") ||
+        rawHref === "about:blank" ||
+        shouldBypassPakeLinkHandling(rawHref)
+      ) {
         return;
       }
 
@@ -892,7 +907,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Rewrite the window.open function.
   const originalWindowOpen = window.open;
   window.open = function (url, name, specs) {
-    if (!url || url === "about:blank" || url === "javascript:;" || url === "javascript:void(0)") {
+    if (
+      !url ||
+      url === "about:blank" ||
+      url === "javascript:;" ||
+      url === "javascript:void(0)"
+    ) {
       return originalWindowOpen.call(window, url, name, specs);
     }
     const normalizedUrl = normalizeAnchorHref(url);
@@ -1515,17 +1535,21 @@ function getFilenameFromUrl(url) {
   // 全能模拟点击“跳过广告”
   function syntheticClick(el) {
     if (!el) return;
-    try { el.click(); } catch (e) {}
     try {
-      ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach((type) => {
-        el.dispatchEvent(
-          new MouseEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          })
-        );
-      });
+      el.click();
+    } catch (e) {}
+    try {
+      ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach(
+        (type) => {
+          el.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            }),
+          );
+        },
+      );
     } catch (e) {}
   }
 
@@ -1548,7 +1572,7 @@ function getFilenameFromUrl(url) {
       "[id^='skip-button']",
       ".ytmusic-ad-skip-button",
       "ytmusic-ad-skip-button",
-      "ytmusic-player-bar[ad-playing] button"
+      "ytmusic-player-bar[ad-playing] button",
     ];
 
     skipSelectors.forEach((sel) => {
@@ -1556,21 +1580,29 @@ function getFilenameFromUrl(url) {
     });
 
     // Match by button text ("跳过" / "Skip" / "Skip ad")
-    document.querySelectorAll("button, div[role='button'], .ytp-ad-skip-button-slot, ytmusic-button-renderer").forEach((btn) => {
-      const txt = (btn.innerText || "").trim().toLowerCase();
-      if (
-        txt === "跳过" ||
-        txt === "跳过广告" ||
-        txt.includes("skip ad") ||
-        txt === "skip" ||
-        (btn.className && typeof btn.className === "string" && btn.className.toLowerCase().includes("skip"))
-      ) {
-        syntheticClick(btn);
-      }
-    });
+    document
+      .querySelectorAll(
+        "button, div[role='button'], .ytp-ad-skip-button-slot, ytmusic-button-renderer",
+      )
+      .forEach((btn) => {
+        const txt = (btn.innerText || "").trim().toLowerCase();
+        if (
+          txt === "跳过" ||
+          txt === "跳过广告" ||
+          txt.includes("skip ad") ||
+          txt === "skip" ||
+          (btn.className &&
+            typeof btn.className === "string" &&
+            btn.className.toLowerCase().includes("skip"))
+        ) {
+          syntheticClick(btn);
+        }
+      });
 
     const media = document.querySelector("video, audio");
-    const adShowing = document.querySelector(".ad-showing, .ytp-ad-player-overlay, ytmusic-player[ad-playing], ytmusic-player-bar[ad-playing], .ytmusic-player-bar[ad-playing]");
+    const adShowing = document.querySelector(
+      ".ad-showing, .ytp-ad-player-overlay, ytmusic-player[ad-playing], ytmusic-player-bar[ad-playing], .ytmusic-player-bar[ad-playing]",
+    );
     if (media && adShowing) {
       media.muted = true;
       media.playbackRate = 16.0;
@@ -1583,13 +1615,17 @@ function getFilenameFromUrl(url) {
       } catch (e) {}
     }
 
-    const adWarning = document.querySelector("tp-yt-paper-dialog, ytd-enforcement-message-view-model, ytmusic-popup-container");
-    if (adWarning && (adWarning.innerText.includes("广告拦截") || adWarning.innerText.includes("ad blockers") || adWarning.innerText.includes("Ad blockers"))) {
+    const adWarning = document.querySelector(
+      "tp-yt-paper-dialog, ytd-enforcement-message-view-model, ytmusic-popup-container",
+    );
+    if (
+      adWarning &&
+      (adWarning.innerText.includes("广告拦截") ||
+        adWarning.innerText.includes("ad blockers") ||
+        adWarning.innerText.includes("Ad blockers"))
+    ) {
       adWarning.remove();
       if (media && media.paused) media.play();
     }
   }, 250);
 })();
-
-
-

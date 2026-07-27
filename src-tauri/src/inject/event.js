@@ -1452,22 +1452,32 @@ if (window.location.host.includes("youtube.com")) {
     "/pagead/",
     "/api/stats/ads",
     "/pcs/view",
-    "/pagead/lvz"
+    "/pagead/lvz",
   ];
-  
+
   const origFetch = window.fetch;
-  window.fetch = function(...args) {
-    const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url ? args[0].url : "");
-    if (blockPatterns.some(pattern => url.includes(pattern))) {
-      return Promise.reject(new Error("Blocked YouTube Ad/Tracking Telemetry by Pake"));
+  window.fetch = function (...args) {
+    const url =
+      typeof args[0] === "string"
+        ? args[0]
+        : args[0] && args[0].url
+          ? args[0].url
+          : "";
+    if (blockPatterns.some((pattern) => url.includes(pattern))) {
+      return Promise.reject(
+        new Error("Blocked YouTube Ad/Tracking Telemetry by Pake"),
+      );
     }
     return origFetch.apply(this, args);
   };
 
   const origOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-    if (typeof url === "string" && blockPatterns.some(pattern => url.includes(pattern))) {
-      this.send = function() {};
+  XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+    if (
+      typeof url === "string" &&
+      blockPatterns.some((pattern) => url.includes(pattern))
+    ) {
+      this.send = function () {};
       return;
     }
     return origOpen.call(this, method, url, ...rest);
@@ -1475,22 +1485,32 @@ if (window.location.host.includes("youtube.com")) {
 
   // 2. 0.01秒视频快进秒杀 + 自动点击“跳过广告”
   setInterval(() => {
-    const skipBtn = document.querySelector(".ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button-slot");
+    const skipBtn = document.querySelector(
+      ".ytp-ad-skip-button, .ytp-ad-skip-button-modern, .ytp-ad-skip-button-slot",
+    );
     if (skipBtn) {
       skipBtn.click();
     }
 
     const video = document.querySelector("video");
-    const adShowing = document.querySelector(".ad-showing, .ytp-ad-player-overlay");
+    const adShowing = document.querySelector(
+      ".ad-showing, .ytp-ad-player-overlay",
+    );
     if (video && adShowing && !isNaN(video.duration) && video.duration > 0) {
       video.currentTime = video.duration;
     }
 
-    const adWarning = document.querySelector("tp-yt-paper-dialog, ytd-enforcement-message-view-model");
-    if (adWarning && (adWarning.innerText.includes("广告拦截") || adWarning.innerText.includes("ad blockers") || adWarning.innerText.includes("Ad blockers"))) {
+    const adWarning = document.querySelector(
+      "tp-yt-paper-dialog, ytd-enforcement-message-view-model",
+    );
+    if (
+      adWarning &&
+      (adWarning.innerText.includes("广告拦截") ||
+        adWarning.innerText.includes("ad blockers") ||
+        adWarning.innerText.includes("Ad blockers"))
+    ) {
       adWarning.remove();
       if (video && video.paused) video.play();
     }
   }, 250);
 }
-

@@ -82,6 +82,58 @@
     setZoom(zoomChange(normalizeZoomPercent(currentZoom)));
   }
 
+  function showCopyToast(msg) {
+    try {
+      if (typeof window.pakeToast === "function") {
+        window.pakeToast(msg);
+        return;
+      }
+      let toastEl = document.getElementById("__pake_copy_toast");
+      if (!toastEl) {
+        toastEl = document.createElement("div");
+        toastEl.id = "__pake_copy_toast";
+        toastEl.style.cssText = "position:fixed;top:20px;right:20px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:all 0.3s ease;pointer-events:none;font-family:sans-serif;";
+        document.body.appendChild(toastEl);
+      }
+      toastEl.textContent = msg;
+      toastEl.style.opacity = "1";
+      toastEl.style.transform = "translateY(0)";
+      clearTimeout(toastEl._timer);
+      toastEl._timer = setTimeout(() => {
+        toastEl.style.opacity = "0";
+      }, 2500);
+    } catch (e) {}
+  }
+
+  function copyUrlToClipboard(text) {
+    let success = false;
+    // 方法 1: 使用 textarea + execCommand("copy") (同步 DOM 命令，100% 突破 Windows WebView2 异步权限拦截)
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "-9999px";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+    } catch (err) {}
+
+    // 方法 2: navigator.clipboard.writeText 异步兜底
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+        success = true;
+      }
+    } catch (err) {}
+
+    showCopyToast("🔗 已复制网页链接到剪贴板");
+    return success;
+  }
+
   let _lastShortcutTime = 0;
   let _lastShortcutKey = "";
 
@@ -91,14 +143,8 @@
       return;
     }
 
-    const tag =
-      event.target && event.target.tagName
-        ? event.target.tagName.toLowerCase()
-        : "";
-    const isInput =
-      tag === "input" ||
-      tag === "textarea" ||
-      (event.target && event.target.isContentEditable);
+    const tag = (event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "");
+    const isInput = tag === "input" || tag === "textarea" || (event.target && event.target.isContentEditable);
 
     // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
     if (event.key === "F11") {
@@ -108,10 +154,7 @@
       event.stopPropagation();
       const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
       if (appWindow) {
-        appWindow
-          .isFullscreen()
-          .then((fs) => appWindow.setFullscreen(!fs))
-          .catch(() => {});
+        appWindow.isFullscreen().then((fs) => appWindow.setFullscreen(!fs)).catch(() => {});
       }
       return;
     }
@@ -135,10 +178,7 @@
         _lastShortcutTime = now;
         _lastShortcutKey = event.key;
         event.preventDefault();
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: "smooth",
-        });
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
         return;
       }
     }
@@ -180,10 +220,7 @@
         _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: "smooth",
-        });
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
         return;
       }
 
@@ -240,8 +277,7 @@
         _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        navigator.clipboard.writeText(window.location.href);
-        console.log(">>> [Pake event.js] 已复制当前 URL:");
+        copyUrlToClipboard(window.location.href);
         return;
       }
 

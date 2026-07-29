@@ -92,7 +92,8 @@
       if (!toastEl) {
         toastEl = document.createElement("div");
         toastEl.id = "__pake_copy_toast";
-        toastEl.style.cssText = "position:fixed;top:20px;right:20px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:all 0.3s ease;pointer-events:none;font-family:sans-serif;";
+        toastEl.style.cssText =
+          "position:fixed;top:20px;right:20px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:all 0.3s ease;pointer-events:none;font-family:sans-serif;";
         document.body.appendChild(toastEl);
       }
       toastEl.textContent = msg;
@@ -143,8 +144,14 @@
       return;
     }
 
-    const tag = (event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "");
-    const isInput = tag === "input" || tag === "textarea" || (event.target && event.target.isContentEditable);
+    const tag =
+      event.target && event.target.tagName
+        ? event.target.tagName.toLowerCase()
+        : "";
+    const isInput =
+      tag === "input" ||
+      tag === "textarea" ||
+      (event.target && event.target.isContentEditable);
 
     // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
     if (event.key === "F11") {
@@ -154,7 +161,10 @@
       event.stopPropagation();
       const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
       if (appWindow) {
-        appWindow.isFullscreen().then((fs) => appWindow.setFullscreen(!fs)).catch(() => {});
+        appWindow
+          .isFullscreen()
+          .then((fs) => appWindow.setFullscreen(!fs))
+          .catch(() => {});
       }
       return;
     }
@@ -178,7 +188,10 @@
         _lastShortcutTime = now;
         _lastShortcutKey = event.key;
         event.preventDefault();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
     }
@@ -220,7 +233,10 @@
         _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
 

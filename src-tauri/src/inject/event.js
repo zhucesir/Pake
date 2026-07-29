@@ -91,8 +91,14 @@
       return;
     }
 
-    const tag = (event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "");
-    const isInput = tag === "input" || tag === "textarea" || (event.target && event.target.isContentEditable);
+    const tag =
+      event.target && event.target.tagName
+        ? event.target.tagName.toLowerCase()
+        : "";
+    const isInput =
+      tag === "input" ||
+      tag === "textarea" ||
+      (event.target && event.target.isContentEditable);
 
     // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
     if (event.key === "F11") {
@@ -102,7 +108,10 @@
       event.stopPropagation();
       const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
       if (appWindow) {
-        appWindow.isFullscreen().then((fs) => appWindow.setFullscreen(!fs)).catch(() => {});
+        appWindow
+          .isFullscreen()
+          .then((fs) => appWindow.setFullscreen(!fs))
+          .catch(() => {});
       }
       return;
     }
@@ -126,7 +135,10 @@
         _lastShortcutTime = now;
         _lastShortcutKey = event.key;
         event.preventDefault();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
     }
@@ -168,7 +180,10 @@
         _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
 

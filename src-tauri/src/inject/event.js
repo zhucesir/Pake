@@ -1,14 +1,15 @@
 (() => {
   console.log(
-    ">>> [Pake event.js v3.5] 上帝脚本（纯粹净秒去广告 + 隐形雷达版）已就位！",
+    ">>> [Pake event.js v3.6] 上帝脚本（极速16倍速纯净去广告 + 抗反拦截检测版）已就位！",
   );
 
   // =========================================================================
-  // 1. YouTube / YouTube Music 纯粹净秒去广告系统 (v3.5.0 版)
+  // 1. YouTube / YouTube Music 极速去广告与自动跳过系统 (v3.6.0 纯净抗检测版)
   // =========================================================================
   const adSelectors = [
     ".ytp-ad-skip-button",
     ".ytp-ad-skip-button-modern",
+    ".ytp-ad-skip-button-slot",
     ".ytp-skip-ad-button",
     ".ytp-skip-ad-button-modern",
     'button[id*="skip-button"]',
@@ -19,61 +20,44 @@
     ".ytp-ad-text-overlay",
   ];
 
-  function fastClick(btn) {
-    if (!btn) return;
-    try {
-      btn.click();
-      btn.dispatchEvent(
-        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
-      );
-      btn.dispatchEvent(
-        new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
-      );
-      btn.dispatchEvent(
-        new PointerEvent("pointerup", { bubbles: true, cancelable: true }),
-      );
-      btn.dispatchEvent(
-        new MouseEvent("mouseup", { bubbles: true, cancelable: true }),
-      );
-    } catch (e) {}
-  }
-
   function skipAds() {
+    // 1. 自动点击各类跳过按钮 (纯净原生 click()，防合成事件风控)
     for (const selector of adSelectors) {
       const btns = document.querySelectorAll(selector);
       btns.forEach((btn) => {
-        fastClick(btn);
+        if (btn) {
+          try {
+            btn.click();
+          } catch (e) {}
+        }
       });
     }
 
-    const isAdPlaying =
-      document.querySelector(".ad-showing") ||
+    // 2. 广告标识实时测定 (兼容 YouTube & YouTube Music 贴片/插播广告 .ad-interrupting)
+    const isAdShowing =
+      document.querySelector(".ad-showing, .ad-interrupting") ||
       document.querySelector('ytmusic-player[player-ui-state="AD_SHOWING"]') ||
       document.querySelector(".ytp-ad-player-overlay") ||
       document.querySelector(".ytp-ad-timed-pie-countdown-container");
 
-    if (isAdPlaying) {
+    // 3. 如果正在播放广告，进行“快速蒸发”处理 (16倍速 + 静音 + 自动跳尾)
+    if (isAdShowing) {
       const media =
         document.querySelector("video") || document.querySelector("audio");
       if (media) {
-        media.muted = true;
-        media.playbackRate = 16.0;
+        media.muted = true; // 静音
+        media.playbackRate = 16.0; // 开启 16 倍速
 
-        if (
-          isFinite(media.duration) &&
-          media.duration > 0 &&
-          media.duration <= 16
-        ) {
+        // 如果视频/音频支持，直接拉到末尾（规避反拦截检测，不再人工 dispatch synthetic 'ended'）
+        if (isFinite(media.duration) && media.duration > 0) {
           media.currentTime = media.duration;
-          try {
-            media.dispatchEvent(new Event("ended"));
-          } catch (e) {}
         }
       }
     }
   }
 
-  setInterval(skipAds, 25);
+  // 100ms 轮询，完美兼顾极速跳过与 CPU 性能，规避高频反爬风控
+  setInterval(skipAds, 100);
 
   // =========================================================================
   // 2. 快捷键与窗口增强系统 (支持 F12 控制台 / Home 顶 / End 底 / Ctrl+L 复制)

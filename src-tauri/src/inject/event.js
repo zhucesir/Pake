@@ -82,180 +82,212 @@
     setZoom(zoomChange(normalizeZoomPercent(currentZoom)));
   }
 
-  window.addEventListener(
-    "keydown",
-    (event) => {
-      const tag =
-        event.target && event.target.tagName
-          ? event.target.tagName.toLowerCase()
-          : "";
-      const isInput =
-        tag === "input" ||
-        tag === "textarea" ||
-        (event.target && event.target.isContentEditable);
+  let _lastShortcutTime = 0;
+  let _lastShortcutKey = "";
 
-      // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
-      if (event.key === "F11") {
+  function handleAllShortcuts(event) {
+    const now = Date.now();
+    if (now - _lastShortcutTime < 200 && _lastShortcutKey === event.key) {
+      return;
+    }
+
+    const tag = (event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "");
+    const isInput = tag === "input" || tag === "textarea" || (event.target && event.target.isContentEditable);
+
+    // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
+    if (event.key === "F11") {
+      _lastShortcutTime = now;
+      _lastShortcutKey = event.key;
+      event.preventDefault();
+      event.stopPropagation();
+      const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
+      if (appWindow) {
+        appWindow.isFullscreen().then((fs) => appWindow.setFullscreen(!fs)).catch(() => {});
+      }
+      return;
+    }
+    if (event.key === "F12") {
+      _lastShortcutTime = now;
+      _lastShortcutKey = event.key;
+      event.preventDefault();
+      event.stopPropagation();
+      window.__TAURI__?.core?.invoke("open_devtools").catch(() => {});
+      return;
+    }
+    if (!isInput) {
+      if (event.key === "Home") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = event.key;
+        event.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (event.key === "End") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = event.key;
+        event.preventDefault();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        return;
+      }
+    }
+
+    // 2. Ctrl / Meta (⌘) 组快捷键
+    if (event.ctrlKey || event.metaKey) {
+      const key = event.key;
+      const keyLow = key.toLowerCase();
+
+      // [页面切换]: Ctrl + ← / ⌘ + [ -> 返回上一页; Ctrl + → / ⌘ + ] -> 下一页
+      if (!isInput && (key === "ArrowLeft" || key === "[")) {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.history.back();
+        return;
+      }
+      if (!isInput && (key === "ArrowRight" || key === "]")) {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.history.forward();
+        return;
+      }
+
+      // [自动滚动]: Ctrl + ↑ -> 自动到顶; Ctrl + ↓ -> 自动到底
+      if (!isInput && key === "ArrowUp") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (!isInput && key === "ArrowDown") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        return;
+      }
+
+      // [页面刷新]: Ctrl + r
+      if (keyLow === "r") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.location.reload();
+        return;
+      }
+
+      // [隐藏窗口]: Ctrl + w (不退出应用)
+      if (keyLow === "w") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
         const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
-        if (appWindow) {
-          appWindow
-            .isFullscreen()
-            .then((fs) => appWindow.setFullscreen(!fs))
-            .catch(() => {});
-        }
+        if (appWindow) appWindow.hide();
         return;
       }
-      if (event.key === "F12") {
+
+      // [缩放控制]: Ctrl + - / Ctrl + = / Ctrl + 0
+      if (key === "-" || key === "_") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        window.__TAURI__?.core?.invoke("open_devtools").catch(() => {});
+        zoomCommon((z) => Math.max(z - 10, 30));
         return;
       }
-      if (!isInput) {
-        if (event.key === "Home") {
-          event.preventDefault();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-        if (event.key === "End") {
-          event.preventDefault();
-          window.scrollTo({
-            top: document.body.scrollHeight,
-            behavior: "smooth",
-          });
-          return;
-        }
+      if (key === "=" || key === "+") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        zoomCommon((z) => Math.min(z + 10, 200));
+        return;
+      }
+      if (key === "0") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        setZoom("100%");
+        return;
       }
 
-      // 2. Ctrl / Meta (⌘) 组快捷键
-      if (event.ctrlKey || event.metaKey) {
-        const key = event.key;
-        const keyLow = key.toLowerCase();
+      // [复制 URL]: Ctrl + L
+      if (keyLow === "l") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        navigator.clipboard.writeText(window.location.href);
+        console.log(">>> [Pake event.js] 已复制当前 URL:");
+        return;
+      }
 
-        // [页面切换]: Ctrl + ← / ⌘ + [ -> 返回上一页; Ctrl + → / ⌘ + ] -> 下一页
-        if (!isInput && (key === "ArrowLeft" || key === "[")) {
+      // [组合 Shift 键快捷键]: Ctrl + Shift + V / H / I / Del
+      if (event.shiftKey) {
+        // 粘贴纯文本: Ctrl + Shift + V
+        if (keyLow === "v") {
+          _lastShortcutTime = now;
+          _lastShortcutKey = key;
           event.preventDefault();
-          event.stopPropagation();
-          window.history.back();
+          document.execCommand("paste");
           return;
         }
-        if (!isInput && (key === "ArrowRight" || key === "]")) {
+        // 回到主页: Ctrl + Shift + H
+        if (keyLow === "h") {
+          _lastShortcutTime = now;
+          _lastShortcutKey = key;
           event.preventDefault();
           event.stopPropagation();
-          window.history.forward();
+          window.location.href = window.location.origin;
           return;
         }
-
-        // [自动滚动]: Ctrl + ↑ -> 自动到顶; Ctrl + ↓ -> 自动到底
-        if (!isInput && key === "ArrowUp") {
-          event.preventDefault();
-          event.stopPropagation();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-        if (!isInput && key === "ArrowDown") {
-          event.preventDefault();
-          event.stopPropagation();
-          window.scrollTo({
-            top: document.body.scrollHeight,
-            behavior: "smooth",
-          });
-          return;
-        }
-
-        // [页面刷新]: Ctrl + r
-        if (keyLow === "r") {
-          event.preventDefault();
-          event.stopPropagation();
-          window.location.reload();
-          return;
-        }
-
-        // [隐藏窗口]: Ctrl + w (不退出应用)
-        if (keyLow === "w") {
-          event.preventDefault();
-          event.stopPropagation();
-          const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
-          if (appWindow) appWindow.hide();
-          return;
-        }
-
-        // [缩放控制]: Ctrl + - / Ctrl + = / Ctrl + 0
-        if (key === "-" || key === "_") {
-          event.preventDefault();
-          event.stopPropagation();
-          zoomCommon((z) => Math.max(z - 10, 30));
-          return;
-        }
-        if (key === "=" || key === "+") {
-          event.preventDefault();
-          event.stopPropagation();
-          zoomCommon((z) => Math.min(z + 10, 200));
-          return;
-        }
-        if (key === "0") {
-          event.preventDefault();
-          event.stopPropagation();
-          setZoom("100%");
-          return;
-        }
-
-        // [复制 URL]: Ctrl + L
-        if (keyLow === "l") {
-          event.preventDefault();
-          event.stopPropagation();
-          navigator.clipboard.writeText(window.location.href);
-          console.log(">>> [Pake event.js] 已复制当前 URL:");
-          return;
-        }
-
-        // [组合 Shift 键快捷键]: Ctrl + Shift + V / H / I / Del
-        if (event.shiftKey) {
-          // 粘贴纯文本: Ctrl + Shift + V
-          if (keyLow === "v") {
-            event.preventDefault();
-            document.execCommand("paste");
-            return;
-          }
-          // 回到主页: Ctrl + Shift + H
-          if (keyLow === "h") {
-            event.preventDefault();
-            event.stopPropagation();
-            window.location.href = window.location.origin;
-            return;
-          }
-          // 打开开发者工具: Ctrl + Shift + I (或 Alt+I)
-          if (keyLow === "i") {
-            event.preventDefault();
-            event.stopPropagation();
-            window.__TAURI__?.core?.invoke("open_devtools").catch(() => {});
-            return;
-          }
-          // 清空缓存并重启: Ctrl + Shift + Del (Delete / Backspace)
-          if (key === "Delete" || key === "Backspace") {
-            event.preventDefault();
-            event.stopPropagation();
-            window.localStorage.clear();
-            window.sessionStorage.clear();
-            window.__TAURI__?.core?.invoke("clear_cache").catch(() => {});
-            window.location.reload();
-            return;
-          }
-        }
-
-        // 兼容 Mac: ⌘ + ⌥ + I (Alt + I) 打开控制台
-        if (event.altKey && keyLow === "i") {
+        // 打开开发者工具: Ctrl + Shift + I (或 Alt+I)
+        if (keyLow === "i") {
+          _lastShortcutTime = now;
+          _lastShortcutKey = key;
           event.preventDefault();
           event.stopPropagation();
           window.__TAURI__?.core?.invoke("open_devtools").catch(() => {});
           return;
         }
+        // 清空缓存并重启: Ctrl + Shift + Del (Delete / Backspace)
+        if (key === "Delete" || key === "Backspace") {
+          _lastShortcutTime = now;
+          _lastShortcutKey = key;
+          event.preventDefault();
+          event.stopPropagation();
+          window.localStorage.clear();
+          window.sessionStorage.clear();
+          window.__TAURI__?.core?.invoke("clear_cache").catch(() => {});
+          window.location.reload();
+          return;
+        }
       }
-    },
-    true,
-  );
+
+      // 兼容 Mac: ⌘ + ⌥ + I (Alt + I) 打开控制台
+      if (event.altKey && keyLow === "i") {
+        _lastShortcutTime = now;
+        _lastShortcutKey = key;
+        event.preventDefault();
+        event.stopPropagation();
+        window.__TAURI__?.core?.invoke("open_devtools").catch(() => {});
+        return;
+      }
+    }
+  }
+
+  window.addEventListener("keydown", handleAllShortcuts, true);
+  window.addEventListener("keyup", handleAllShortcuts, true);
+  document.addEventListener("keydown", handleAllShortcuts, true);
+  document.addEventListener("keyup", handleAllShortcuts, true);
 
   // =========================================================================
   // 3. 链接在新窗口打开改为当前应用内打开 (防跳转外部浏览器)

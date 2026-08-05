@@ -43,6 +43,10 @@ on:
         description: "App version"
         required: false
         default: "1.0.0"
+      user_agent:
+        description: "Custom User-Agent"
+        required: false
+        default: ""
       fullscreen:
         description: "Start in fullscreen mode"
         required: false
@@ -143,6 +147,10 @@ jobs:
             ARGS+=("--app-version" "${{ inputs.app_version }}")
           fi
 
+          if [ -n "${{ inputs.user_agent }}" ]; then
+            ARGS+=("--user-agent" "${{ inputs.user_agent }}")
+          fi
+
           if [ "${{ inputs.fullscreen }}" == "true" ]; then
             ARGS+=("--fullscreen")
           fi
@@ -199,6 +207,10 @@ jobs:
 
           if ("${{ inputs.app_version }}" -ne "") {
             $args += "--app-version", "${{ inputs.app_version }}"
+          }
+
+          if ("${{ inputs.user_agent }}" -ne "") {
+            $args += "--user-agent", "${{ inputs.user_agent }}"
           }
 
           if ("${{ inputs.fullscreen }}" -eq "true") {

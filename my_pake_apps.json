@@ -1,4 +1,16 @@
 {
+  "GeminiDesk": {
+    "url": "https://gemini.google.com/",
+    "width": 1000,
+    "height": 700,
+    "features": [
+      "95% 超宽视图展平",
+      "固定 1000x700 尺寸秒开加成",
+      "Fira Code/JetBrains Mono 极客代码字体美化",
+      "一键导出 Markdown (.md) 对话记录",
+      "智能外链接管（非 Google 链接自动拉起系统默认浏览器）"
+    ]
+  },
   "ChatGPTDesk": {
     "url": "https://chatgpt.com",
     "activation_shortcut": "Alt+C",

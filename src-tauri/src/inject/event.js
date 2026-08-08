@@ -185,7 +185,7 @@
       } catch (e) {}
     };
 
-    // 4. 接管右键快捷极客菜单
+    // 4. 接管右键快捷极客菜单（使用纯 DOM 节点避免 TrustedTypes CSP 拦截）
     document.addEventListener(
       "contextmenu",
       (e) => {
@@ -225,7 +225,7 @@
             user-select: none !important;
           `;
 
-          const createMenuItem = (icon, text, active, onClick) => {
+          const createMenuItem = (iconText, labelText, active, onClick) => {
             const item = document.createElement("div");
             item.style.cssText = `
               padding: 8px 16px;
@@ -235,13 +235,27 @@
               justify-content: space-between;
               transition: background 0.15s;
             `;
-            item.innerHTML = `
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span>${icon}</span>
-                <span>${text}</span>
-              </div>
-              ${active ? '<span style="color:#8ab4f8; font-weight:bold;">✓</span>' : ""}
-            `;
+
+            const leftBox = document.createElement("div");
+            leftBox.style.cssText = "display:flex; align-items:center; gap:8px;";
+
+            const iconSpan = document.createElement("span");
+            iconSpan.textContent = iconText;
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = labelText;
+
+            leftBox.appendChild(iconSpan);
+            leftBox.appendChild(textSpan);
+            item.appendChild(leftBox);
+
+            if (active) {
+              const activeSpan = document.createElement("span");
+              activeSpan.style.cssText = "color:#8ab4f8; font-weight:bold;";
+              activeSpan.textContent = "✓";
+              item.appendChild(activeSpan);
+            }
+
             item.onmouseover = () => (item.style.background = "#303134");
             item.onmouseout = () => (item.style.background = "transparent");
             item.onclick = (event) => {
@@ -323,6 +337,7 @@
       true,
     );
   }
+
 
   // =========================================================================
   // 0.6 ChatGPT Pro 极客桌面增强模式（95%超宽视图 + 极客字体 + MD导出 + 外链接管）

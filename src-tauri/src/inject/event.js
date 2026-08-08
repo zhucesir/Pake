@@ -68,7 +68,7 @@
   if (window.location.hostname.includes("gemini.google.com")) {
     console.log(">>> [Pake] 侦测到 Gemini，已启动 Gemini Pro 极客桌面插件！");
 
-    // 1. 基础全局样式（解封表格 + 代码极客字体）
+    // 1. 基础全局样式（仅解封右侧主对话区域表格 + 代码极客字体）
     const injectBaseStyles = () => {
       try {
         if (document.getElementById("pake-gemini-base-style")) return;
@@ -78,12 +78,12 @@
         const style = document.createElement("style");
         style.id = "pake-gemini-base-style";
         style.textContent = `
-          /* 解决表格右侧截断/显示不全问题，并保持居中居美 */
-          .table-wrapper, 
-          .markdown-table-wrapper, 
-          table-wrapper, 
-          table, 
-          div[class*="table"] {
+          /* 解决主对话框内表格右侧截断问题 */
+          main .table-wrapper, 
+          main .markdown-table-wrapper, 
+          main table-wrapper, 
+          main table, 
+          main div[class*="table"] {
             max-width: 100% !important;
             width: 100% !important;
             overflow-x: visible !important;
@@ -91,7 +91,7 @@
             margin-right: auto !important;
           }
 
-          table {
+          main table {
             width: 100% !important;
             display: table !important;
             table-layout: auto !important;
@@ -111,7 +111,7 @@
     document.addEventListener("DOMContentLoaded", injectBaseStyles);
     setInterval(injectBaseStyles, 2000);
 
-    // 2. 动态应用视图模式（满屏 / 宽屏 / 窄屏，强制水平居中对齐）
+    // 2. 动态应用视图模式（严密限定在 main 右侧区域，绝对保护左侧侧边栏和Pin列表）
     const applyViewMode = (mode) => {
       try {
         let widthCss = "95%";
@@ -129,10 +129,15 @@
           target.appendChild(styleEl);
         }
         styleEl.textContent = `
-          .conversation-container, main-container, .input-area-container, 
-          div[class*="chat-history"], message-content, model-response, 
-          .response-container-content, .response-container, user-query, 
-          .user-query-container, div[class*="response"], div[class*="markdown"], div[class*="query"] {
+          main .conversation-container, 
+          main main-container, 
+          main .input-area-container, 
+          main message-content, 
+          main model-response, 
+          main .response-container-content, 
+          main .response-container, 
+          main user-query, 
+          main .user-query-container {
             max-width: ${widthCss} !important;
             width: ${widthCss} !important;
             margin-left: auto !important;
@@ -241,8 +246,7 @@
             `;
 
             const leftBox = document.createElement("div");
-            leftBox.style.cssText =
-              "display:flex; align-items:center; gap:8px;";
+            leftBox.style.cssText = "display:flex; align-items:center; gap:8px;";
 
             const iconSpan = document.createElement("span");
             iconSpan.textContent = iconText;
@@ -342,6 +346,7 @@
       true,
     );
   }
+
 
   // =========================================================================
   // 0.6 ChatGPT Pro 极客桌面增强模式（95%超宽视图 + 极客字体 + MD导出 + 外链接管）

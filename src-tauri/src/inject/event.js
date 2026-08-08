@@ -70,199 +70,220 @@
 
     // 1. 基础全局样式（解封表格 + 代码极客字体）
     const injectBaseStyles = () => {
-      if (document.getElementById("pake-gemini-base-style")) return;
-      const style = document.createElement("style");
-      style.id = "pake-gemini-base-style";
-      style.textContent = `
-        /* 解决表格右侧截断/显示不全问题 */
-        .table-wrapper, 
-        .markdown-table-wrapper, 
-        table-wrapper, 
-        table, 
-        div[class*="table"] {
-          max-width: 100% !important;
-          width: 100% !important;
-          overflow-x: visible !important;
-        }
+      try {
+        if (document.getElementById("pake-gemini-base-style")) return;
+        const target = document.head || document.documentElement || document.body;
+        if (!target) return;
+        const style = document.createElement("style");
+        style.id = "pake-gemini-base-style";
+        style.textContent = `
+          /* 解决表格右侧截断/显示不全问题 */
+          .table-wrapper, 
+          .markdown-table-wrapper, 
+          table-wrapper, 
+          table, 
+          div[class*="table"] {
+            max-width: 100% !important;
+            width: 100% !important;
+            overflow-x: visible !important;
+          }
 
-        table {
-          width: 100% !important;
-          display: table !important;
-          table-layout: auto !important;
-        }
+          table {
+            width: 100% !important;
+            display: table !important;
+            table-layout: auto !important;
+          }
 
-        /* 代码块极客字体美化 */
-        pre, code, .code-block, code-block {
-          font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
-          font-variant-ligatures: contextual !important;
-        }
-      `;
-      (document.head || document.documentElement).appendChild(style);
+          /* 代码块极客字体美化 */
+          pre, code, .code-block, code-block {
+            font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
+            font-variant-ligatures: contextual !important;
+          }
+        `;
+        target.appendChild(style);
+      } catch (e) {}
     };
 
     injectBaseStyles();
     document.addEventListener("DOMContentLoaded", injectBaseStyles);
+    setInterval(injectBaseStyles, 2000);
 
     // 2. 动态应用视图模式（满屏 / 宽屏 / 窄屏）
     const applyViewMode = (mode) => {
-      let widthCss = "98%";
-      if (mode === "narrow") widthCss = "768px";
-      else if (mode === "wide") widthCss = "1200px";
+      try {
+        let widthCss = "98%";
+        if (mode === "narrow") widthCss = "768px";
+        else if (mode === "wide") widthCss = "1200px";
 
-      let styleEl = document.getElementById("pake-view-mode-style");
-      if (!styleEl) {
-        styleEl = document.createElement("style");
-        styleEl.id = "pake-view-mode-style";
-        (document.head || document.documentElement).appendChild(styleEl);
-      }
-      styleEl.textContent = `
-        .conversation-container, main-container, .input-area-container, 
-        div[class*="chat-history"], message-content, model-response, 
-        .response-container-content, .response-container, user-query, 
-        .user-query-container, div[class*="response"], div[class*="markdown"], div[class*="query"] {
-          max-width: ${widthCss} !important;
-          width: ${widthCss} !important;
+        let styleEl = document.getElementById("pake-view-mode-style");
+        const target = document.head || document.documentElement || document.body;
+        if (!target) return;
+
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.id = "pake-view-mode-style";
+          target.appendChild(styleEl);
         }
-      `;
-      localStorage.setItem("pake_gemini_view_mode", mode);
+        styleEl.textContent = `
+          .conversation-container, main-container, .input-area-container, 
+          div[class*="chat-history"], message-content, model-response, 
+          .response-container-content, .response-container, user-query, 
+          .user-query-container, div[class*="response"], div[class*="markdown"], div[class*="query"] {
+            max-width: ${widthCss} !important;
+            width: ${widthCss} !important;
+          }
+        `;
+        localStorage.setItem("pake_gemini_view_mode", mode);
+      } catch (e) {}
     };
 
     // 初始读取上一次保存的视图模式 (默认 full)
     const savedMode = localStorage.getItem("pake_gemini_view_mode") || "full";
     applyViewMode(savedMode);
+    setInterval(() => {
+      const mode = localStorage.getItem("pake_gemini_view_mode") || "full";
+      applyViewMode(mode);
+    }, 2000);
 
     // 3. 导出对话为 Markdown
     const exportMarkdown = () => {
-      let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
-      const userQueries = document.querySelectorAll("user-query, .query-text");
-      const modelResponses = document.querySelectorAll(
-        "message-content, .model-response-text",
-      );
-
-      if (userQueries.length === 0 && modelResponses.length === 0) {
-        const elems = document.querySelectorAll(
-          'div[class*="message"], article',
+      try {
+        let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
+        const userQueries = document.querySelectorAll("user-query, .query-text");
+        const modelResponses = document.querySelectorAll(
+          "message-content, .model-response-text",
         );
-        elems.forEach((el) => {
-          mdContent += `${el.innerText}\n\n---\n\n`;
-        });
-      } else {
-        const count = Math.max(userQueries.length, modelResponses.length);
-        for (let i = 0; i < count; i++) {
-          if (userQueries[i])
-            mdContent += `### 👤 **User**\n\n${userQueries[i].innerText.trim()}\n\n`;
-          if (modelResponses[i])
-            mdContent += `### 🤖 **Gemini**\n\n${modelResponses[i].innerText.trim()}\n\n---\n\n`;
-        }
-      }
 
-      const blob = new Blob([mdContent], {
-        type: "text/markdown;charset=utf-8",
-      });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `Gemini_Export_${Date.now()}.md`;
-      a.click();
+        if (userQueries.length === 0 && modelResponses.length === 0) {
+          const elems = document.querySelectorAll(
+            'div[class*="message"], article',
+          );
+          elems.forEach((el) => {
+            mdContent += `${el.innerText}\n\n---\n\n`;
+          });
+        } else {
+          const count = Math.max(userQueries.length, modelResponses.length);
+          for (let i = 0; i < count; i++) {
+            if (userQueries[i])
+              mdContent += `### 👤 **User**\n\n${userQueries[i].innerText.trim()}\n\n`;
+            if (modelResponses[i])
+              mdContent += `### 🤖 **Gemini**\n\n${modelResponses[i].innerText.trim()}\n\n---\n\n`;
+          }
+        }
+
+        const blob = new Blob([mdContent], {
+          type: "text/markdown;charset=utf-8",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `Gemini_Export_${Date.now()}.md`;
+        a.click();
+      } catch (e) {}
     };
 
     // 4. 接管右键快捷极客菜单
     document.addEventListener(
       "contextmenu",
       (e) => {
-        const oldMenu = document.getElementById("pake-custom-context-menu");
-        if (oldMenu) oldMenu.remove();
+        try {
+          const oldMenu = document.getElementById("pake-custom-context-menu");
+          if (oldMenu) oldMenu.remove();
 
-        // 选中文本时不拦截，保留浏览器原生复制功能
-        if (
-          window.getSelection() &&
-          window.getSelection().toString().trim().length > 0
-        ) {
-          return;
-        }
+          // 选中文本时不拦截，保留浏览器原生复制功能
+          if (
+            window.getSelection() &&
+            window.getSelection().toString().trim().length > 0
+          ) {
+            return;
+          }
 
-        e.preventDefault();
+          e.preventDefault();
 
-        const currentMode =
-          localStorage.getItem("pake_gemini_view_mode") || "full";
+          const currentMode =
+            localStorage.getItem("pake_gemini_view_mode") || "full";
 
-        const menu = document.createElement("div");
-        menu.id = "pake-custom-context-menu";
-        menu.style.cssText = `
-          position: fixed !important;
-          left: ${e.clientX}px !important;
-          top: ${e.clientY}px !important;
-          z-index: 2147483647 !important;
-          background: #202124 !important;
-          color: #e8eaed !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
-          border-radius: 10px !important;
-          padding: 6px 0 !important;
-          min-width: 190px !important;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.55) !important;
-          font-family: system-ui, -apple-system, sans-serif !important;
-          font-size: 13px !important;
-          user-select: none !important;
-        `;
-
-        const createMenuItem = (icon, text, active, onClick) => {
-          const item = document.createElement("div");
-          item.style.cssText = `
-            padding: 8px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: background 0.15s;
+          const menu = document.createElement("div");
+          menu.id = "pake-custom-context-menu";
+          menu.style.cssText = `
+            position: fixed !important;
+            left: ${e.clientX}px !important;
+            top: ${e.clientY}px !important;
+            z-index: 2147483647 !important;
+            background: #202124 !important;
+            color: #e8eaed !important;
+            border: 1px solid rgba(255, 255, 255, 0.16) !important;
+            border-radius: 10px !important;
+            padding: 6px 0 !important;
+            min-width: 190px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.55) !important;
+            font-family: system-ui, -apple-system, sans-serif !important;
+            font-size: 13px !important;
+            user-select: none !important;
           `;
-          item.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span>${icon}</span>
-              <span>${text}</span>
-            </div>
-            ${active ? '<span style="color:#8ab4f8; font-weight:bold;">✓</span>' : ""}
-          `;
-          item.onmouseover = () => (item.style.background = "#303134");
-          item.onmouseout = () => (item.style.background = "transparent");
-          item.onclick = (event) => {
-            event.stopPropagation();
-            menu.remove();
-            onClick();
+
+          const createMenuItem = (icon, text, active, onClick) => {
+            const item = document.createElement("div");
+            item.style.cssText = `
+              padding: 8px 16px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              transition: background 0.15s;
+            `;
+            item.innerHTML = `
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span>${icon}</span>
+                <span>${text}</span>
+              </div>
+              ${active ? '<span style="color:#8ab4f8; font-weight:bold;">✓</span>' : ""}
+            `;
+            item.onmouseover = () => (item.style.background = "#303134");
+            item.onmouseout = () => (item.style.background = "transparent");
+            item.onclick = (event) => {
+              event.stopPropagation();
+              menu.remove();
+              onClick();
+            };
+            return item;
           };
-          return item;
-        };
 
-        menu.appendChild(
-          createMenuItem("🚀", "满屏模式 (98%)", currentMode === "full", () =>
-            applyViewMode("full"),
-          ),
-        );
-        menu.appendChild(
-          createMenuItem(
-            "💻",
-            "宽屏模式 (1200px)",
-            currentMode === "wide",
-            () => applyViewMode("wide"),
-          ),
-        );
-        menu.appendChild(
-          createMenuItem(
-            "📖",
-            "窄屏模式 (768px)",
-            currentMode === "narrow",
-            () => applyViewMode("narrow"),
-          ),
-        );
+          menu.appendChild(
+            createMenuItem("🚀", "满屏模式 (98%)", currentMode === "full", () =>
+              applyViewMode("full"),
+            ),
+          );
+          menu.appendChild(
+            createMenuItem(
+              "💻",
+              "宽屏模式 (1200px)",
+              currentMode === "wide",
+              () => applyViewMode("wide"),
+            ),
+          );
+          menu.appendChild(
+            createMenuItem(
+              "📖",
+              "窄屏模式 (768px)",
+              currentMode === "narrow",
+              () => applyViewMode("narrow"),
+            ),
+          );
 
-        const divider = document.createElement("div");
-        divider.style.cssText =
-          "height: 1px; background: rgba(255,255,255,0.12); margin: 5px 0;";
-        menu.appendChild(divider);
+          const divider = document.createElement("div");
+          divider.style.cssText =
+            "height: 1px; background: rgba(255,255,255,0.12); margin: 5px 0;";
+          menu.appendChild(divider);
 
-        menu.appendChild(
-          createMenuItem("📥", "导出对话 Markdown", false, exportMarkdown),
-        );
+          menu.appendChild(
+            createMenuItem("📥", "导出对话 Markdown", false, exportMarkdown),
+          );
 
-        (document.body || document.documentElement).appendChild(menu);
+          const target = document.body || document.documentElement;
+          if (target) target.appendChild(menu);
+        } catch (err) {
+          console.error("[Pake] contextmenu error:", err);
+        }
       },
       true,
     );

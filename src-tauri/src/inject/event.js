@@ -246,7 +246,8 @@
             `;
 
             const leftBox = document.createElement("div");
-            leftBox.style.cssText = "display:flex; align-items:center; gap:8px;";
+            leftBox.style.cssText =
+              "display:flex; align-items:center; gap:8px;";
 
             const iconSpan = document.createElement("span");
             iconSpan.textContent = iconText;
@@ -346,7 +347,6 @@
       true,
     );
   }
-
 
   // =========================================================================
   // 0.6 ChatGPT Pro 极客桌面增强模式（95%超宽视图 + 极客字体 + MD导出 + 外链接管）

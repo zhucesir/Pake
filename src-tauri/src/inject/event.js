@@ -63,6 +63,141 @@
   }
 
   // =========================================================================
+  // 0.7 Gemini Pro 极客桌面增强模式（超宽视图 + 表格不截断 + 极客字体 + MD导出 + 外链接管）
+  // =========================================================================
+  if (window.location.hostname.includes('gemini.google.com')) {
+    console.log(">>> [Pake] 侦测到 Gemini，已启动 Gemini Pro 极客桌面插件！");
+
+    // 1. 彻底展平 100% 满屏超宽视图 & 修复表格右侧截断问题
+    const injectStyles = () => {
+      if (document.getElementById('pake-gemini-style')) return;
+      const style = document.createElement('style');
+      style.id = 'pake-gemini-style';
+      style.textContent = `
+        /* 强制展平所有 Gemini 对话框、消息容器、响应容器 */
+        .conversation-container, 
+        main-container, 
+        .input-area-container, 
+        div[class*="chat-history"],
+        message-content,
+        model-response,
+        .response-container-content,
+        .response-container,
+        user-query,
+        .user-query-container,
+        div[class*="response"],
+        div[class*="markdown"],
+        div[class*="query"] {
+          max-width: 98% !important;
+          width: 98% !important;
+        }
+
+        /* 解决表格右侧截断/显示不全问题 */
+        .table-wrapper, 
+        .markdown-table-wrapper, 
+        table-wrapper, 
+        table, 
+        div[class*="table"] {
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow-x: visible !important;
+        }
+
+        table {
+          width: 100% !important;
+          display: table !important;
+          table-layout: auto !important;
+        }
+
+        /* 代码块极客字体美化 */
+        pre, code, .code-block, code-block {
+          font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
+          font-variant-ligatures: contextual !important;
+        }
+
+        /* 导出按钮样式 */
+        #pake-gemini-export-md-btn {
+          position: fixed;
+          top: 12px;
+          right: 70px;
+          z-index: 99999;
+          background: #1a73e8;
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          padding: 6px 14px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+          transition: all 0.2s ease;
+        }
+        #pake-gemini-export-md-btn:hover {
+          background: #1557b0;
+          transform: scale(1.05);
+        }
+      `;
+      document.head.appendChild(style);
+    };
+
+    injectStyles();
+    document.addEventListener('DOMContentLoaded', injectStyles);
+
+    // 2. 智能外链接管（非 google.com / gemini.google.com 链接使用系统默认浏览器打开）
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a');
+      if (a && a.href) {
+        try {
+          const targetUrl = new URL(a.href, window.location.href);
+          const isGoogle = targetUrl.hostname.endsWith('google.com') || 
+                           targetUrl.hostname.endsWith('gemini.google.com');
+          if (!isGoogle && targetUrl.protocol.startsWith('http')) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Pake] 外部链接，由系统默认浏览器打开:', targetUrl.href);
+            window.open(targetUrl.href, '_blank');
+          }
+        } catch (err) {}
+      }
+    }, true);
+
+    // 3. 一键导出 Gemini 当前对话为 Markdown (.md) 文件
+    const addExportButton = () => {
+      if (document.getElementById('pake-gemini-export-md-btn')) return;
+      const btn = document.createElement('button');
+      btn.id = 'pake-gemini-export-md-btn';
+      btn.innerHTML = '📥 导出 Markdown';
+      btn.onclick = () => {
+        let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
+        const userQueries = document.querySelectorAll('user-query, .query-text');
+        const modelResponses = document.querySelectorAll('message-content, .model-response-text');
+        
+        if (userQueries.length === 0 && modelResponses.length === 0) {
+          const elems = document.querySelectorAll('div[class*="message"], article');
+          elems.forEach(el => {
+            mdContent += `${el.innerText}\n\n---\n\n`;
+          });
+        } else {
+          const count = Math.max(userQueries.length, modelResponses.length);
+          for (let i = 0; i < count; i++) {
+            if (userQueries[i]) mdContent += `### 👤 **User**\n\n${userQueries[i].innerText.trim()}\n\n`;
+            if (modelResponses[i]) mdContent += `### 🤖 **Gemini**\n\n${modelResponses[i].innerText.trim()}\n\n---\n\n`;
+          }
+        }
+
+        const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Gemini_Export_${Date.now()}.md`;
+        a.click();
+      };
+      document.body.appendChild(btn);
+    };
+
+    setInterval(addExportButton, 2000);
+  }
+
+  // =========================================================================
   // 0.6 ChatGPT Pro 极客桌面增强模式（95%超宽视图 + 极客字体 + MD导出 + 外链接管）
   // =========================================================================
   if (

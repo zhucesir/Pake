@@ -72,13 +72,12 @@
     const injectBaseStyles = () => {
       try {
         if (document.getElementById("pake-gemini-base-style")) return;
-        const target =
-          document.head || document.documentElement || document.body;
+        const target = document.head || document.documentElement || document.body;
         if (!target) return;
         const style = document.createElement("style");
         style.id = "pake-gemini-base-style";
         style.textContent = `
-          /* 解决表格右侧截断/显示不全问题 */
+          /* 解决表格右侧截断/显示不全问题，并保持居中居美 */
           .table-wrapper, 
           .markdown-table-wrapper, 
           table-wrapper, 
@@ -87,6 +86,8 @@
             max-width: 100% !important;
             width: 100% !important;
             overflow-x: visible !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
           }
 
           table {
@@ -109,16 +110,15 @@
     document.addEventListener("DOMContentLoaded", injectBaseStyles);
     setInterval(injectBaseStyles, 2000);
 
-    // 2. 动态应用视图模式（满屏 / 宽屏 / 窄屏）
+    // 2. 动态应用视图模式（满屏 / 宽屏 / 窄屏，强制水平居中对齐）
     const applyViewMode = (mode) => {
       try {
-        let widthCss = "98%";
+        let widthCss = "95%";
         if (mode === "narrow") widthCss = "768px";
         else if (mode === "wide") widthCss = "1200px";
 
         let styleEl = document.getElementById("pake-view-mode-style");
-        const target =
-          document.head || document.documentElement || document.body;
+        const target = document.head || document.documentElement || document.body;
         if (!target) return;
 
         if (!styleEl) {
@@ -133,6 +133,8 @@
           .user-query-container, div[class*="response"], div[class*="markdown"], div[class*="query"] {
             max-width: ${widthCss} !important;
             width: ${widthCss} !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
           }
         `;
         localStorage.setItem("pake_gemini_view_mode", mode);
@@ -151,9 +153,7 @@
     const exportMarkdown = () => {
       try {
         let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
-        const userQueries = document.querySelectorAll(
-          "user-query, .query-text",
-        );
+        const userQueries = document.querySelectorAll("user-query, .query-text");
         const modelResponses = document.querySelectorAll(
           "message-content, .model-response-text",
         );
@@ -268,7 +268,7 @@
           };
 
           menu.appendChild(
-            createMenuItem("🚀", "满屏模式 (98%)", currentMode === "full", () =>
+            createMenuItem("🚀", "满屏模式 (95%)", currentMode === "full", () =>
               applyViewMode("full"),
             ),
           );

@@ -1,0 +1,33 @@
+{
+  "ChatGPTDesk": {
+    "url": "https://chatgpt.com",
+    "activation_shortcut": "Alt+C",
+    "width": 1000,
+    "height": 700,
+    "features": [
+      "95% 超宽视图",
+      "Alt+C 全局 Spotlight 浮动唤醒",
+      "Fira Code/JetBrains Mono 极客代码字体",
+      "一键导出 Markdown (.md)",
+      "智能外链接管"
+    ]
+  },
+  "GitHubDesk": {
+    "url": "https://github.com",
+    "icon": "https://avatars.githubusercontent.com/u/9919?s=512&v=4",
+    "features": [
+      "智能外链接管（非 GitHub 域名自动拉起默认浏览器）",
+      "Fira Code/JetBrains Mono 代码字体与悬浮美化",
+      "高对比度任务栏图标"
+    ]
+  },
+  "ImaDesk": {
+    "url": "https://ima.qq.com/chat",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ima",
+    "features": [
+      "伪装 ima User-Agent 解锁客户端功能",
+      "物理隔离与黑洞拦截 Aegis / Beacon 数据上报",
+      "直达 /chat 核心工作台路由"
+    ]
+  }
+}

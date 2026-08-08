@@ -6,32 +6,57 @@
   // =========================================================================
   // 0. 腾讯 ima 极速去埋点追踪系统（拦截 Beacon/Aegis 上报）
   // =========================================================================
-  if (window.location.hostname.includes('ima.qq.com')) {
+  if (window.location.hostname.includes("ima.qq.com")) {
     console.log(">>> [Pake] 侦测到腾讯 ima，已启动反跟踪系统！");
-    
+
     // 制造假对象瘫痪全局 SDK
-    window.Aegis = class { constructor(){} report(){} reportEvent(){} reportTime(){} setConfig(){} };
-    window.DtJsReporter = { reportEvent: ()=>{} };
+    window.Aegis = class {
+      constructor() {}
+      report() {}
+      reportEvent() {}
+      reportTime() {}
+      setConfig() {}
+    };
+    window.DtJsReporter = { reportEvent: () => {} };
 
     // 劫持 Fetch 请求
     const originalFetch = window.fetch;
-    window.fetch = async function(...args) {
-      const url = (args[0] && args[0].url) ? args[0].url : (typeof args[0] === 'string' ? args[0] : '');
-      if (url.includes('beacon.qq.com') || url.includes('aegis.qq.com') || url.includes('/report') || url.includes('oth.str.beacon')) {
-        console.log('[Pake 物理隔离] 已成功拦截 Fetch 跟踪请求:', url);
-        return new Response(JSON.stringify({code:0, msg:"success"}), { status: 200, headers: {'Content-Type': 'application/json'} });
+    window.fetch = async function (...args) {
+      const url =
+        args[0] && args[0].url
+          ? args[0].url
+          : typeof args[0] === "string"
+            ? args[0]
+            : "";
+      if (
+        url.includes("beacon.qq.com") ||
+        url.includes("aegis.qq.com") ||
+        url.includes("/report") ||
+        url.includes("oth.str.beacon")
+      ) {
+        console.log("[Pake 物理隔离] 已成功拦截 Fetch 跟踪请求:", url);
+        return new Response(JSON.stringify({ code: 0, msg: "success" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       }
       return originalFetch.apply(this, args);
     };
 
     // 劫持 XHR 请求
     const originalOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-      if (typeof url === 'string' && (url.includes('beacon.qq.com') || url.includes('aegis.qq.com') || url.includes('/report') || url.includes('oth.str.beacon'))) {
-        console.log('[Pake 物理隔离] 已成功拦截 XHR 跟踪请求:', url);
+    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+      if (
+        typeof url === "string" &&
+        (url.includes("beacon.qq.com") ||
+          url.includes("aegis.qq.com") ||
+          url.includes("/report") ||
+          url.includes("oth.str.beacon"))
+      ) {
+        console.log("[Pake 物理隔离] 已成功拦截 XHR 跟踪请求:", url);
         // 伪装一个无害的 URL 让它走完，或者直接 abort
         // 我们直接把它指向一个不存在的本地假接口
-        url = 'https://ima.qq.com/__pake_blocked_tracking';
+        url = "https://ima.qq.com/__pake_blocked_tracking";
       }
       return originalOpen.call(this, method, url, ...rest);
     };
@@ -40,14 +65,17 @@
   // =========================================================================
   // 0.6 ChatGPT Pro 极客桌面增强模式（95%超宽视图 + 极客字体 + MD导出 + 外链接管）
   // =========================================================================
-  if (window.location.hostname.includes('chatgpt.com') || window.location.hostname.includes('openai.com')) {
+  if (
+    window.location.hostname.includes("chatgpt.com") ||
+    window.location.hostname.includes("openai.com")
+  ) {
     console.log(">>> [Pake] 侦测到 ChatGPT，已启动 ChatGPT Pro 极客桌面插件！");
 
     // 1. 解锁 95% 超宽视图 & 极客代码字体美化
     const injectStyles = () => {
-      if (document.getElementById('pake-chatgpt-style')) return;
-      const style = document.createElement('style');
-      style.id = 'pake-chatgpt-style';
+      if (document.getElementById("pake-chatgpt-style")) return;
+      const style = document.createElement("style");
+      style.id = "pake-chatgpt-style";
       style.textContent = `
         /* 突破窄屏限制，展平对话框至 95% 宽度 */
         @media (min-width: 768px) {
@@ -89,48 +117,62 @@
     };
 
     injectStyles();
-    document.addEventListener('DOMContentLoaded', injectStyles);
+    document.addEventListener("DOMContentLoaded", injectStyles);
 
     // 2. 智能外链接管（非 chatgpt.com / openai.com 链接使用系统默认浏览器打开）
-    document.addEventListener('click', (e) => {
-      const a = e.target.closest('a');
-      if (a && a.href) {
-        try {
-          const targetUrl = new URL(a.href, window.location.href);
-          const isChatGPT = targetUrl.hostname.endsWith('chatgpt.com') || 
-                            targetUrl.hostname.endsWith('openai.com');
-          if (!isChatGPT && targetUrl.protocol.startsWith('http')) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[Pake] 外部链接，由系统默认浏览器打开:', targetUrl.href);
-            window.open(targetUrl.href, '_blank');
-          }
-        } catch (err) {}
-      }
-    }, true);
+    document.addEventListener(
+      "click",
+      (e) => {
+        const a = e.target.closest("a");
+        if (a && a.href) {
+          try {
+            const targetUrl = new URL(a.href, window.location.href);
+            const isChatGPT =
+              targetUrl.hostname.endsWith("chatgpt.com") ||
+              targetUrl.hostname.endsWith("openai.com");
+            if (!isChatGPT && targetUrl.protocol.startsWith("http")) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log(
+                "[Pake] 外部链接，由系统默认浏览器打开:",
+                targetUrl.href,
+              );
+              window.open(targetUrl.href, "_blank");
+            }
+          } catch (err) {}
+        }
+      },
+      true,
+    );
 
     // 3. 一键导出当前对话为 Markdown (.md) 文件
     const addExportButton = () => {
-      if (document.getElementById('pake-export-md-btn')) return;
-      const btn = document.createElement('button');
-      btn.id = 'pake-export-md-btn';
-      btn.innerHTML = '📥 导出 Markdown';
+      if (document.getElementById("pake-export-md-btn")) return;
+      const btn = document.createElement("button");
+      btn.id = "pake-export-md-btn";
+      btn.innerHTML = "📥 导出 Markdown";
       btn.onclick = () => {
         let mdContent = `# ChatGPT 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
-        const articles = document.querySelectorAll('article');
+        const articles = document.querySelectorAll("article");
         if (articles.length === 0) {
-          alert('暂未检测到对话内容！');
+          alert("暂未检测到对话内容！");
           return;
         }
         articles.forEach((art) => {
-          const isUser = art.querySelector('img[alt*="User"]') || art.innerText.includes('You said');
-          const role = isUser ? '👤 **User**' : '🤖 **ChatGPT**';
-          const text = art.innerText.replace(/ChatGPT said:|You said:/g, '').trim();
+          const isUser =
+            art.querySelector('img[alt*="User"]') ||
+            art.innerText.includes("You said");
+          const role = isUser ? "👤 **User**" : "🤖 **ChatGPT**";
+          const text = art.innerText
+            .replace(/ChatGPT said:|You said:/g, "")
+            .trim();
           mdContent += `### ${role}\n\n${text}\n\n---\n\n`;
         });
 
-        const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
-        const a = document.createElement('a');
+        const blob = new Blob([mdContent], {
+          type: "text/markdown;charset=utf-8",
+        });
+        const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = `ChatGPT_Export_${Date.now()}.md`;
         a.click();
@@ -144,33 +186,41 @@
   // =========================================================================
   // 0.5 GitHub Pro 极客增强模式（外链接管、代码字体美化、文件树自动展开）
   // =========================================================================
-  if (window.location.hostname.includes('github.com')) {
+  if (window.location.hostname.includes("github.com")) {
     console.log(">>> [Pake] 侦测到 GitHub，已启动 GitHub Pro 极客增强插件！");
 
     // A. 拦截非 GitHub 外部链接，使用系统默认浏览器打开
-    document.addEventListener('click', (e) => {
-      const a = e.target.closest('a');
-      if (a && a.href) {
-        try {
-          const targetUrl = new URL(a.href, window.location.href);
-          const isGithub = targetUrl.hostname.endsWith('github.com') || 
-                          targetUrl.hostname.endsWith('github.io') || 
-                          targetUrl.hostname.endsWith('githubusercontent.com');
-          if (!isGithub && targetUrl.protocol.startsWith('http')) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[Pake] 外部链接，由系统默认浏览器打开:', targetUrl.href);
-            window.open(targetUrl.href, '_blank');
-          }
-        } catch (err) {}
-      }
-    }, true);
+    document.addEventListener(
+      "click",
+      (e) => {
+        const a = e.target.closest("a");
+        if (a && a.href) {
+          try {
+            const targetUrl = new URL(a.href, window.location.href);
+            const isGithub =
+              targetUrl.hostname.endsWith("github.com") ||
+              targetUrl.hostname.endsWith("github.io") ||
+              targetUrl.hostname.endsWith("githubusercontent.com");
+            if (!isGithub && targetUrl.protocol.startsWith("http")) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log(
+                "[Pake] 外部链接，由系统默认浏览器打开:",
+                targetUrl.href,
+              );
+              window.open(targetUrl.href, "_blank");
+            }
+          } catch (err) {}
+        }
+      },
+      true,
+    );
 
     // B. 美化代码字体与代码块交互
     const injectStyles = () => {
-      if (document.getElementById('pake-github-style')) return;
-      const style = document.createElement('style');
-      style.id = 'pake-github-style';
+      if (document.getElementById("pake-github-style")) return;
+      const style = document.createElement("style");
+      style.id = "pake-github-style";
       style.textContent = `
         .blob-code-inner, pre, code, .react-code-text {
           font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
@@ -186,9 +236,9 @@
 
     // C. 页面加载/路由切换时自动注入样式
     injectStyles();
-    document.addEventListener('DOMContentLoaded', injectStyles);
-    document.addEventListener('pjax:end', injectStyles);
-    document.addEventListener('turbo:render', injectStyles);
+    document.addEventListener("DOMContentLoaded", injectStyles);
+    document.addEventListener("pjax:end", injectStyles);
+    document.addEventListener("turbo:render", injectStyles);
   }
 
   // =========================================================================
@@ -280,7 +330,8 @@
       if (!toastEl) {
         toastEl = document.createElement("div");
         toastEl.id = "__pake_copy_toast";
-        toastEl.style.cssText = "position:fixed;top:20px;right:20px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:all 0.3s ease;pointer-events:none;font-family:sans-serif;";
+        toastEl.style.cssText =
+          "position:fixed;top:20px;right:20px;z-index:999999;background:rgba(0,0,0,0.85);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;box-shadow:0 8px 20px rgba(0,0,0,0.3);transition:all 0.3s ease;pointer-events:none;font-family:sans-serif;";
         document.body.appendChild(toastEl);
       }
       toastEl.textContent = msg;
@@ -331,8 +382,14 @@
       return;
     }
 
-    const tag = (event.target && event.target.tagName ? event.target.tagName.toLowerCase() : "");
-    const isInput = tag === "input" || tag === "textarea" || (event.target && event.target.isContentEditable);
+    const tag =
+      event.target && event.target.tagName
+        ? event.target.tagName.toLowerCase()
+        : "";
+    const isInput =
+      tag === "input" ||
+      tag === "textarea" ||
+      (event.target && event.target.isContentEditable);
 
     // 1. 无需 Ctrl/Cmd 组合键支持: F11 (全屏), F12 (调试), Home/End (非输入状态下到顶/底)
     if (event.key === "F11") {
@@ -342,7 +399,10 @@
       event.stopPropagation();
       const appWindow = window.__TAURI__?.window?.getCurrentWindow?.();
       if (appWindow) {
-        appWindow.isFullscreen().then((fs) => appWindow.setFullscreen(!fs)).catch(() => {});
+        appWindow
+          .isFullscreen()
+          .then((fs) => appWindow.setFullscreen(!fs))
+          .catch(() => {});
       }
       return;
     }
@@ -366,7 +426,10 @@
         _lastShortcutTime = now;
         _lastShortcutKey = event.key;
         event.preventDefault();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
     }
@@ -408,7 +471,10 @@
         _lastShortcutKey = key;
         event.preventDefault();
         event.stopPropagation();
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        });
         return;
       }
 

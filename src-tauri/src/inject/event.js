@@ -72,7 +72,8 @@
     const injectBaseStyles = () => {
       try {
         if (document.getElementById("pake-gemini-base-style")) return;
-        const target = document.head || document.documentElement || document.body;
+        const target =
+          document.head || document.documentElement || document.body;
         if (!target) return;
         const style = document.createElement("style");
         style.id = "pake-gemini-base-style";
@@ -116,7 +117,8 @@
         else if (mode === "wide") widthCss = "1200px";
 
         let styleEl = document.getElementById("pake-view-mode-style");
-        const target = document.head || document.documentElement || document.body;
+        const target =
+          document.head || document.documentElement || document.body;
         if (!target) return;
 
         if (!styleEl) {
@@ -149,7 +151,9 @@
     const exportMarkdown = () => {
       try {
         let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
-        const userQueries = document.querySelectorAll("user-query, .query-text");
+        const userQueries = document.querySelectorAll(
+          "user-query, .query-text",
+        );
         const modelResponses = document.querySelectorAll(
           "message-content, .model-response-text",
         );

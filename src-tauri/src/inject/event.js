@@ -63,35 +63,17 @@
   }
 
   // =========================================================================
-  // 0.7 Gemini Pro 极客桌面增强模式（超宽视图 + 表格不截断 + 极客字体 + MD导出 + 外链接管）
+  // 0.7 Gemini Pro 极客桌面增强模式（悬浮控制胶囊 + 三档视图切换 + MD导出 + 外链接管）
   // =========================================================================
   if (window.location.hostname.includes("gemini.google.com")) {
     console.log(">>> [Pake] 侦测到 Gemini，已启动 Gemini Pro 极客桌面插件！");
 
-    // 1. 彻底展平 100% 满屏超宽视图 & 修复表格右侧截断问题
-    const injectStyles = () => {
-      if (document.getElementById("pake-gemini-style")) return;
+    // 1. 基础全局样式（表格解封 + 代码极客字体）
+    const injectBaseStyles = () => {
+      if (document.getElementById("pake-gemini-base-style")) return;
       const style = document.createElement("style");
-      style.id = "pake-gemini-style";
+      style.id = "pake-gemini-base-style";
       style.textContent = `
-        /* 强制展平所有 Gemini 对话框、消息容器、响应容器 */
-        .conversation-container, 
-        main-container, 
-        .input-area-container, 
-        div[class*="chat-history"],
-        message-content,
-        model-response,
-        .response-container-content,
-        .response-container,
-        user-query,
-        .user-query-container,
-        div[class*="response"],
-        div[class*="markdown"],
-        div[class*="query"] {
-          max-width: 98% !important;
-          width: 98% !important;
-        }
-
         /* 解决表格右侧截断/显示不全问题 */
         .table-wrapper, 
         .markdown-table-wrapper, 
@@ -114,68 +96,94 @@
           font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
           font-variant-ligatures: contextual !important;
         }
-
-        /* 导出按钮样式 */
-        #pake-gemini-export-md-btn {
-          position: fixed;
-          top: 12px;
-          right: 70px;
-          z-index: 99999;
-          background: #1a73e8;
-          color: #ffffff;
-          border: none;
-          border-radius: 6px;
-          padding: 6px 14px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-          transition: all 0.2s ease;
-        }
-        #pake-gemini-export-md-btn:hover {
-          background: #1557b0;
-          transform: scale(1.05);
-        }
       `;
       document.head.appendChild(style);
     };
 
-    injectStyles();
-    document.addEventListener("DOMContentLoaded", injectStyles);
+    injectBaseStyles();
+    document.addEventListener("DOMContentLoaded", injectBaseStyles);
 
-    // 2. 智能外链接管（非 google.com / gemini.google.com 链接使用系统默认浏览器打开）
-    document.addEventListener(
-      "click",
-      (e) => {
-        const a = e.target.closest("a");
-        if (a && a.href) {
-          try {
-            const targetUrl = new URL(a.href, window.location.href);
-            const isGoogle =
-              targetUrl.hostname.endsWith("google.com") ||
-              targetUrl.hostname.endsWith("gemini.google.com");
-            if (!isGoogle && targetUrl.protocol.startsWith("http")) {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log(
-                "[Pake] 外部链接，由系统默认浏览器打开:",
-                targetUrl.href,
-              );
-              window.open(targetUrl.href, "_blank");
-            }
-          } catch (err) {}
+    // 2. 注入右下角毛玻璃控制胶囊 (三档视图切换 + 导出 Markdown)
+    const injectControlPill = () => {
+      if (document.getElementById("pake-control-pill")) return;
+
+      const savedMode = localStorage.getItem("pake_gemini_view_mode") || "full";
+
+      const applyViewMode = (mode) => {
+        let widthCss = "98%";
+        let label = "🚀 满屏";
+        if (mode === "narrow") {
+          widthCss = "768px";
+          label = "📖 窄屏";
+        } else if (mode === "wide") {
+          widthCss = "1200px";
+          label = "💻 宽屏";
         }
-      },
-      true,
-    );
 
-    // 3. 一键导出 Gemini 当前对话为 Markdown (.md) 文件
-    const addExportButton = () => {
-      if (document.getElementById("pake-gemini-export-md-btn")) return;
-      const btn = document.createElement("button");
-      btn.id = "pake-gemini-export-md-btn";
-      btn.innerHTML = "📥 导出 Markdown";
-      btn.onclick = () => {
+        let styleEl = document.getElementById("pake-view-mode-style");
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.id = "pake-view-mode-style";
+          document.head.appendChild(styleEl);
+        }
+        styleEl.textContent = `
+          .conversation-container, main-container, .input-area-container, 
+          div[class*="chat-history"], message-content, model-response, 
+          .response-container-content, .response-container, user-query, 
+          .user-query-container, div[class*="response"], div[class*="markdown"], div[class*="query"] {
+            max-width: ${widthCss} !important;
+            width: ${widthCss} !important;
+          }
+        `;
+        localStorage.setItem("pake_gemini_view_mode", mode);
+        const modeBtn = document.getElementById("pake-btn-view-mode");
+        if (modeBtn) modeBtn.innerHTML = `📐 ${label}`;
+      };
+
+      const pill = document.createElement("div");
+      pill.id = "pake-control-pill";
+      pill.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999999;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(28, 29, 33, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 24px;
+        padding: 4px 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        font-family: system-ui, -apple-system, sans-serif;
+      `;
+
+      const viewBtn = document.createElement("button");
+      viewBtn.id = "pake-btn-view-mode";
+      viewBtn.style.cssText =
+        "background:none; border:none; color:#e3e3e3; font-size:12px; font-weight:600; cursor:pointer; padding:4px 8px; border-radius:12px; transition:background 0.2s;";
+      viewBtn.onmouseover = () =>
+        (viewBtn.style.background = "rgba(255,255,255,0.12)");
+      viewBtn.onmouseout = () => (viewBtn.style.background = "none");
+
+      const modes = ["narrow", "wide", "full"];
+      viewBtn.onclick = () => {
+        const current =
+          localStorage.getItem("pake_gemini_view_mode") || "full";
+        const nextIdx = (modes.indexOf(current) + 1) % modes.length;
+        applyViewMode(modes[nextIdx]);
+      };
+
+      const exportBtn = document.createElement("button");
+      exportBtn.innerHTML = "📥 导出 MD";
+      exportBtn.style.cssText =
+        "background:#1a73e8; border:none; color:#ffffff; font-size:12px; font-weight:600; cursor:pointer; padding:4px 10px; border-radius:14px; transition:all 0.2s;";
+      exportBtn.onmouseover = () =>
+        (exportBtn.style.transform = "scale(1.05)");
+      exportBtn.onmouseout = () => (exportBtn.style.transform = "scale(1)");
+      exportBtn.onclick = () => {
         let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
         const userQueries = document.querySelectorAll(
           "user-query, .query-text",
@@ -209,10 +217,41 @@
         a.download = `Gemini_Export_${Date.now()}.md`;
         a.click();
       };
-      document.body.appendChild(btn);
+
+      pill.appendChild(viewBtn);
+      pill.appendChild(exportBtn);
+      document.body.appendChild(pill);
+
+      applyViewMode(savedMode);
     };
 
-    setInterval(addExportButton, 2000);
+    setInterval(injectControlPill, 1500);
+
+    // 3. 智能外链接管
+    document.addEventListener(
+      "click",
+      (e) => {
+        const a = e.target.closest("a");
+        if (a && a.href) {
+          try {
+            const targetUrl = new URL(a.href, window.location.href);
+            const isGoogle =
+              targetUrl.hostname.endsWith("google.com") ||
+              targetUrl.hostname.endsWith("gemini.google.com");
+            if (!isGoogle && targetUrl.protocol.startsWith("http")) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log(
+                "[Pake] 外部链接，由系统默认浏览器打开:",
+                targetUrl.href,
+              );
+              window.open(targetUrl.href, "_blank");
+            }
+          } catch (err) {}
+        }
+      },
+      true,
+    );
   }
 
   // =========================================================================

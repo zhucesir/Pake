@@ -170,8 +170,7 @@
 
       const modes = ["narrow", "wide", "full"];
       viewBtn.onclick = () => {
-        const current =
-          localStorage.getItem("pake_gemini_view_mode") || "full";
+        const current = localStorage.getItem("pake_gemini_view_mode") || "full";
         const nextIdx = (modes.indexOf(current) + 1) % modes.length;
         applyViewMode(modes[nextIdx]);
       };
@@ -180,8 +179,7 @@
       exportBtn.innerHTML = "📥 导出 MD";
       exportBtn.style.cssText =
         "background:#1a73e8; border:none; color:#ffffff; font-size:12px; font-weight:600; cursor:pointer; padding:4px 10px; border-radius:14px; transition:all 0.2s;";
-      exportBtn.onmouseover = () =>
-        (exportBtn.style.transform = "scale(1.05)");
+      exportBtn.onmouseover = () => (exportBtn.style.transform = "scale(1.05)");
       exportBtn.onmouseout = () => (exportBtn.style.transform = "scale(1)");
       exportBtn.onclick = () => {
         let mdContent = `# Gemini 对话记录\n\n导出时间: ${new Date().toLocaleString()}\n\n---\n\n`;
